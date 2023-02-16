@@ -16,7 +16,8 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(root))
-        .route("/companies", post(create_company));
+        .route("/companies", post(create_company))
+        .route("/companies", get(find_companies));
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
@@ -30,6 +31,14 @@ async fn main() {
 
 async fn root() -> &'static str {
     "Hello, World!"
+}
+
+async fn find_companies() -> Json<Vec<Company>> {
+    let companies = vec!(Company {
+        id: 1337,
+        name: "John".to_string(),
+    });
+    Json(companies)
 }
 
 async fn create_company(
