@@ -5,6 +5,8 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
+use sqlx::mysql::MySqlPoolOptions;
+use sqlx::mysql::MySqlPool;
 
 #[tokio::main]
 async fn main() {
@@ -14,10 +16,16 @@ async fn main() {
         .finish();
     tracing::subscriber::set_global_default(subscriber).expect("global dispatch set failed");
 
+    let pool = MySqlPoolOptions::new()
+        .max_connections(5)
+        .connect("mysql://root@localhost/temporter_development").await.expect("failed to create MySql connection pool");
+
     let app = Router::new()
         .route("/", get(root))
         .route("/companies", post(create_company))
-        .route("/companies", get(find_companies));
+        .route("/companies", get({
+            || find_companies(pool)
+        }));
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
@@ -33,10 +41,13 @@ async fn root() -> &'static str {
     "Hello, World!"
 }
 
-async fn find_companies() -> Json<Vec<Company>> {
+async fn find_companies(pool: MySqlPool) -> Json<Vec<Company>> {
+    let row: (i64, String,) = sqlx::query_as("SELECT id, name from companies")
+    .fetch_one(&pool).await.expect("error");
+
     let companies = vec!(Company {
-        id: 1337,
-        name: "John".to_string(),
+        id: row.0,
+        name: row.1,
     });
     Json(companies)
 }
@@ -59,6 +70,6 @@ struct CreateCompany {
 
 #[derive(Serialize)]
 struct Company {
-    id: u64,
+    id: i64,
     name: String,
 }
