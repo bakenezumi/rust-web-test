@@ -1585,6 +1585,7 @@ dependencies = [
 name = "web-test"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "axum",
  "serde",
  "serde_json",
