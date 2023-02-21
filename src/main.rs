@@ -4,14 +4,17 @@ use axum::{
     extract::State
 };
 use std::net::SocketAddr;
+use std::sync::Arc;
 use sqlx::mysql::MySqlPoolOptions;
+use tokio::sync::Mutex;
 
 mod company;
 use company::company_dao_impl::CompanyDaoImpl;
+use company::company_dao::CompanyDao;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub company_dao: CompanyDaoImpl
+    pub company_dao: Arc<Mutex<dyn CompanyDao>>
 }
 
 #[tokio::main]
@@ -30,7 +33,7 @@ async fn main() {
 
     let company_dao = CompanyDaoImpl{ pool };
 
-    let state = AppState { company_dao };
+    let state = AppState { company_dao: Arc::new(Mutex::new(company_dao)) };
     let app = router(state);
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     tracing::info!("listening on {}", addr);

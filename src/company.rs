@@ -4,11 +4,11 @@ use axum::{
   extract::State
 };
 use serde::{Deserialize, Serialize};
-use crate::company::company_dao::CompanyDao;
 use crate::AppState;
 
 pub async fn find_companies(State(state): State<AppState>) -> Json<Vec<Company>> {
-  let companies = state.company_dao.select_companies();
+  let dao = state.company_dao.lock().await;
+  let companies = dao.select_companies();
   Json(companies.await)
 }
 
@@ -16,11 +16,13 @@ pub async fn find_companies(State(state): State<AppState>) -> Json<Vec<Company>>
 pub mod company_dao {
   use async_trait::async_trait;
   use crate::company::Company;
+  use dyn_clone::DynClone;
 
   #[async_trait]
-  pub trait CompanyDao {
+  pub trait CompanyDao: DynClone + Send {
     async fn select_companies(&self) -> Vec<Company>;  
   }
+
 }
 
 pub mod company_dao_impl {
@@ -33,6 +35,8 @@ pub mod company_dao_impl {
   pub struct CompanyDaoImpl {
     pub pool: MySqlPool
   }
+
+  dyn_clone::clone_trait_object!(CompanyDao);
 
   #[async_trait]
   impl CompanyDao for CompanyDaoImpl {
