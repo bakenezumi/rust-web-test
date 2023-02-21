@@ -1,12 +1,18 @@
 use axum::{
     routing::{get, post},
     Router,
+    extract::State
 };
 use std::net::SocketAddr;
 use sqlx::mysql::MySqlPoolOptions;
-use sqlx::mysql::MySqlPool;
 
 mod company;
+use company::company_dao_impl::CompanyDaoImpl;
+
+#[derive(Clone)]
+pub struct AppState {
+    pub company_dao: CompanyDaoImpl
+}
 
 #[tokio::main]
 async fn main() {
@@ -22,10 +28,10 @@ async fn main() {
         .await
         .expect("failed to create MySql connection pool");
 
-    let app = router(pool);
+    let company_dao = CompanyDaoImpl{ pool };
 
-    // run our app with hyper
-    // `axum::Server` is a re-export of `hyper::Server`
+    let state = AppState { company_dao };
+    let app = router(state);
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
@@ -35,15 +41,14 @@ async fn main() {
 }
 
 
-fn router(pool: MySqlPool) -> Router {
+fn router(state: AppState) -> Router {
     Router::new()
         .route("/", get(root))
         .route("/companies", post(company::create_company))
-        .route("/companies", get({
-            || company::find_companies(pool)
-        }))
+        .route("/companies", get(company::find_companies))
+        .with_state(state)
 }
 
-async fn root() -> &'static str {
+async fn root(_: State<AppState>) -> &'static str {
     "Hello, World!"
 }

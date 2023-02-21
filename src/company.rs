@@ -1,18 +1,19 @@
 use axum::{
   http::StatusCode,
   Json,
+  extract::State
 };
 use serde::{Deserialize, Serialize};
-use sqlx::mysql::MySqlPool;
 use crate::company::company_dao::CompanyDao;
+use crate::AppState;
 
-pub async fn find_companies(pool: MySqlPool) -> Json<Vec<Company>> {
-  let company_dao = company_dao_impl::CompanyDaoImpl{ pool };
-  let companies = company_dao.select_companies();
+pub async fn find_companies(State(state): State<AppState>) -> Json<Vec<Company>> {
+  let companies = state.company_dao.select_companies();
   Json(companies.await)
 }
 
-mod company_dao {
+
+pub mod company_dao {
   use async_trait::async_trait;
   use crate::company::Company;
 
@@ -22,12 +23,13 @@ mod company_dao {
   }
 }
 
-mod company_dao_impl {
+pub mod company_dao_impl {
   use async_trait::async_trait;
   use sqlx::mysql::MySqlPool;
   use crate::company::Company;
   use crate::company::company_dao::CompanyDao;
 
+  #[derive(Clone)]
   pub struct CompanyDaoImpl {
     pub pool: MySqlPool
   }
@@ -44,10 +46,10 @@ mod company_dao_impl {
       })
     }  
   }
-
 }
 
 pub async fn create_company(
+  _: State<AppState>,
   Json(payload): Json<CreateCompany>,
 ) -> (StatusCode, Json<Company>) {
   let company = Company {
