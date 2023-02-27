@@ -32,13 +32,13 @@ pub mod company_dao_impl {
     #[async_trait]
     impl CompanyDao for CompanyDaoImpl {
         async fn select_companies(&self) -> anyhow::Result<Vec<Company>> {
-            let row: (i64, String) = sqlx::query_as("SELECT id, name from companies")
+            let (id, name) = sqlx::query_as("SELECT id, name from companies")
                 .fetch_one(&self.pool)
                 .await?;
 
             Ok(vec![Company {
-                id: row.0,
-                name: row.1,
+                id,
+                name,
             }])
         }
     }
