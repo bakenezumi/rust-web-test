@@ -1,23 +1,23 @@
+use anyhow::Result;
 use axum::{
-    routing::{get, post},
-    Router,
     extract::State,
     http::StatusCode,
-    response::{IntoResponse, Response}
+    response::{IntoResponse, Response},
+    routing::{get, post},
+    Router,
 };
-use anyhow::Result;
+use sqlx::mysql::MySqlPoolOptions;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use sqlx::mysql::MySqlPoolOptions;
 use tokio::sync::Mutex;
 
 mod company;
-use company::company_dao_impl::CompanyDaoImpl;
 use company::company_dao::CompanyDao;
+use company::company_dao_impl::CompanyDaoImpl;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub company_dao: Arc<Mutex<dyn CompanyDao>>
+    pub company_dao: Arc<Mutex<dyn CompanyDao>>,
 }
 
 pub struct AppError(anyhow::Error);
@@ -45,9 +45,11 @@ async fn main() -> Result<()> {
         .connect("mysql://root@localhost/temporter_development")
         .await?;
 
-    let company_dao = CompanyDaoImpl{ pool };
+    let company_dao = CompanyDaoImpl { pool };
 
-    let state = AppState { company_dao: Arc::new(Mutex::new(company_dao)) };
+    let state = AppState {
+        company_dao: Arc::new(Mutex::new(company_dao)),
+    };
     let app = router(state);
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     tracing::info!("listening on {}", addr);
