@@ -47,6 +47,7 @@ async fn main() -> Result<()> {
     // initialize tracing
     let subscriber = tracing_subscriber::fmt()
         .with_max_level(tracing::Level::DEBUG)
+        .with_thread_ids(true)
         .finish();
     tracing::subscriber::set_global_default(subscriber)?;
 
