@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[debug_handler]
 pub async fn find_companies(State(state): State<AppState>) -> Result<Json<Vec<Company>>, AppError> {
-    let dao = state.company_dao.lock().await;
+    let dao = state.company_dao.read().await;
     let future = dao.select_companies();
     {
         let result = future.await.map_err(|e| AppError(e));
@@ -17,7 +17,7 @@ pub mod company_dao {
     use async_trait::async_trait;
 
     #[async_trait]
-    pub trait CompanyDao: Send {
+    pub trait CompanyDao: Send + Sync {
         async fn select_companies(&self) -> Result<Vec<Company>, anyhow::Error>;
     }
 }

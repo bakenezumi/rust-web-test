@@ -9,7 +9,7 @@ use axum::{
 use sqlx::mysql::MySqlPoolOptions;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 
 mod company;
 use company::company_dao::CompanyDao;
@@ -17,7 +17,7 @@ use company::company_dao_impl::CompanyDaoImpl;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub company_dao: Arc<Mutex<dyn CompanyDao>>,
+    pub company_dao: Arc<RwLock<dyn CompanyDao>>,
 }
 
 pub struct AppError(anyhow::Error);
@@ -48,7 +48,7 @@ async fn main() -> Result<()> {
     let company_dao = CompanyDaoImpl { pool };
 
     let state = AppState {
-        company_dao: Arc::new(Mutex::new(company_dao)),
+        company_dao: Arc::new(RwLock::new(company_dao)),
     };
     let app = router(state);
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
