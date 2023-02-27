@@ -15,5 +15,4 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "mysql" ] }
 async-trait = "0.1.64"
-dyn-clone = "1.0"
 anyhow = "1.0"

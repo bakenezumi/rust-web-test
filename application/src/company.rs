@@ -15,10 +15,9 @@ pub async fn find_companies(State(state): State<AppState>) -> Result<Json<Vec<Co
 pub mod company_dao {
     use crate::company::Company;
     use async_trait::async_trait;
-    use dyn_clone::DynClone;
 
     #[async_trait]
-    pub trait CompanyDao: DynClone + Send {
+    pub trait CompanyDao: Send {
         async fn select_companies(&self) -> Result<Vec<Company>, anyhow::Error>;
     }
 }
@@ -33,8 +32,6 @@ pub mod company_dao_impl {
     pub struct CompanyDaoImpl {
         pub pool: MySqlPool,
     }
-
-    dyn_clone::clone_trait_object!(CompanyDao);
 
     #[async_trait]
     impl CompanyDao for CompanyDaoImpl {
