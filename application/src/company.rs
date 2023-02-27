@@ -5,11 +5,8 @@ use serde::{Deserialize, Serialize};
 #[debug_handler]
 pub async fn find_companies(State(state): State<AppState>) -> Result<Json<Vec<Company>>, AppError> {
     let dao = state.company_dao.read().await;
-    let future = dao.select_companies();
-    {
-        let result = future.await.map_err(|e| AppError(e));
-        Ok(Json(result?))
-    }
+    let result = dao.select_companies().await?;
+    Ok(Json(result))
 }
 
 pub mod company_dao {
@@ -37,8 +34,7 @@ pub mod company_dao_impl {
         async fn select_companies(&self) -> anyhow::Result<Vec<Company>> {
             let row: (i64, String) = sqlx::query_as("SELECT id, name from companies")
                 .fetch_one(&self.pool)
-                .await
-                .map_err(|e| anyhow::anyhow!(e))?;
+                .await?;
 
             Ok(vec![Company {
                 id: row.0,
