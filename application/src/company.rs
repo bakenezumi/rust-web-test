@@ -12,7 +12,6 @@ pub async fn find_companies(State(state): State<AppState>) -> Json<Vec<Company>>
   Json(companies.await)
 }
 
-
 pub mod company_dao {
   use async_trait::async_trait;
   use crate::company::Company;
@@ -20,7 +19,7 @@ pub mod company_dao {
 
   #[async_trait]
   pub trait CompanyDao: DynClone + Send {
-    async fn select_companies(&self) -> Vec<Company>;  
+    async fn select_companies(&self) -> Vec<Company>;
   }
 
 }
