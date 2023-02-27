@@ -1,11 +1,15 @@
-use crate::AppState;
-use axum::{extract::State, http::StatusCode, Json};
+use crate::{AppError, AppState};
+use axum::{debug_handler, extract::State, http::StatusCode, Json};
 use serde::{Deserialize, Serialize};
 
-pub async fn find_companies(State(state): State<AppState>) -> Json<Vec<Company>> {
+#[debug_handler]
+pub async fn find_companies(State(state): State<AppState>) -> Result<Json<Vec<Company>>, AppError> {
     let dao = state.company_dao.lock().await;
-    let companies = dao.select_companies();
-    Json(companies.await)
+    let future = dao.select_companies();
+    {
+        let result = future.await.map_err(|e| AppError(e));
+        Ok(Json(result?))
+    }
 }
 
 pub mod company_dao {
@@ -15,7 +19,7 @@ pub mod company_dao {
 
     #[async_trait]
     pub trait CompanyDao: DynClone + Send {
-        async fn select_companies(&self) -> Vec<Company>;
+        async fn select_companies(&self) -> Result<Vec<Company>, anyhow::Error>;
     }
 }
 
@@ -34,16 +38,16 @@ pub mod company_dao_impl {
 
     #[async_trait]
     impl CompanyDao for CompanyDaoImpl {
-        async fn select_companies(&self) -> Vec<Company> {
-            let row: (i64, String) = sqlx::query_as("SELECT id, name from companies")
+        async fn select_companies(&self) -> Result<Vec<Company>, anyhow::Error> {
+            let row: (i64, String) = sqlx::query_as("SELECT id, name from companiess")
                 .fetch_one(&self.pool)
                 .await
-                .expect("error");
+                .map_err(|e| anyhow::anyhow!(e))?;
 
-            vec![Company {
+            Ok(vec![Company {
                 id: row.0,
                 name: row.1,
-            }]
+            }])
         }
     }
 }
