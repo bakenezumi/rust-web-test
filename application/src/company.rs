@@ -28,7 +28,6 @@ pub mod company_dao_impl {
     use async_trait::async_trait;
     use sqlx::mysql::MySqlPool;
 
-    #[derive(Clone)]
     pub struct CompanyDaoImpl {
         pub pool: MySqlPool,
     }
