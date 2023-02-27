@@ -18,7 +18,7 @@ pub mod company_dao {
 
     #[async_trait]
     pub trait CompanyDao: Send + Sync {
-        async fn select_companies(&self) -> Result<Vec<Company>, anyhow::Error>;
+        async fn select_companies(&self) -> anyhow::Result<Vec<Company>>;
     }
 }
 
@@ -34,7 +34,7 @@ pub mod company_dao_impl {
 
     #[async_trait]
     impl CompanyDao for CompanyDaoImpl {
-        async fn select_companies(&self) -> Result<Vec<Company>, anyhow::Error> {
+        async fn select_companies(&self) -> anyhow::Result<Vec<Company>> {
             let row: (i64, String) = sqlx::query_as("SELECT id, name from companies")
                 .fetch_one(&self.pool)
                 .await
