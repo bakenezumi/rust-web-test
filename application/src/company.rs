@@ -39,7 +39,7 @@ pub mod company_dao_impl {
     #[async_trait]
     impl CompanyDao for CompanyDaoImpl {
         async fn select_companies(&self) -> Result<Vec<Company>, anyhow::Error> {
-            let row: (i64, String) = sqlx::query_as("SELECT id, name from companiess")
+            let row: (i64, String) = sqlx::query_as("SELECT id, name from companies")
                 .fetch_one(&self.pool)
                 .await
                 .map_err(|e| anyhow::anyhow!(e))?;
