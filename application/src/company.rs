@@ -48,11 +48,26 @@ pub mod company_dao_impl {
     #[async_trait]
     impl CompanyDao for CompanyDaoImpl {
         async fn find(&self) -> anyhow::Result<Vec<Company>> {
-            let (id, name, alphabet) = sqlx::query_as("SELECT id, name, alphabet FROM companies")
-                .fetch_one(&self.pool)
-                .await?;
+            let companies = sqlx::query_as(
+                "
+SELECT id, name, alphabet
+FROM companies
+ORDER BY id
+",
+            )
+            .fetch_all(&self.pool)
+            .await?;
 
-            Ok(vec![Company { id, name, alphabet }])
+            let result = companies
+                .iter()
+                .map(|(id, name, alphabet): &(i64, String, String)| Company {
+                    id: *id,
+                    name: name.clone(),
+                    alphabet: alphabet.clone(),
+                })
+                .collect();
+
+            Ok(result)
         }
 
         async fn create(&self, payload: CreateCompany) -> anyhow::Result<Company> {
