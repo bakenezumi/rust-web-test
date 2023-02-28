@@ -11,7 +11,7 @@ pub async fn find_companies(State(state): State<AppState>) -> Result<Json<Vec<Co
     Ok(Json(result))
 }
 
-// curl -X POST -H "Content-Type: application/json" -d '{"name":"test_name"}' localhost:3000/companies
+// curl -X POST -H "Content-Type: application/json" -d '{"name":"test_name", "alphabet":"test_name"}' localhost:3000/companies
 // #[debug_handler]
 pub async fn create_company(
     state: State<AppState>,
@@ -48,17 +48,25 @@ pub mod company_dao_impl {
     #[async_trait]
     impl CompanyDao for CompanyDaoImpl {
         async fn find(&self) -> anyhow::Result<Vec<Company>> {
-            let (id, name) = sqlx::query_as("SELECT id, name from companies")
+            let (id, name, alphabet) = sqlx::query_as("SELECT id, name, alphabet FROM companies")
                 .fetch_one(&self.pool)
                 .await?;
 
-            Ok(vec![Company { id, name }])
+            Ok(vec![Company { id, name, alphabet }])
         }
 
         async fn create(&self, payload: CreateCompany) -> anyhow::Result<Company> {
+            let id = sqlx::query("INSERT INTO companies (name, alphabet, created_at, updated_at) VALUES (?, ?, now(), now())")
+            .bind(&payload.name)
+            .bind(&payload.alphabet)
+            .execute(&self.pool)
+            .await?
+            .last_insert_id();
+
             let created = Company {
-                id: 1337,
+                id: id as i64,
                 name: payload.name,
+                alphabet: payload.alphabet,
             };
             Ok(created)
         }
@@ -68,10 +76,12 @@ pub mod company_dao_impl {
 #[derive(Deserialize)]
 pub struct CreateCompany {
     name: String,
+    alphabet: String,
 }
 
 #[derive(Serialize)]
 pub struct Company {
     id: i64,
     name: String,
+    alphabet: String,
 }
