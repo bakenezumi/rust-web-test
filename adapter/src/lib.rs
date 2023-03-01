@@ -23,11 +23,11 @@ ORDER BY id
             .await?;
 
             let result = companies
-                .iter()
-                .map(|(id, name, alphabet): &(i64, String, String)| Company {
-                    id: *id,
-                    name: name.clone(),
-                    alphabet: alphabet.clone(),
+                .into_iter()
+                .map(|(id, name, alphabet)| Company {
+                    id,
+                    name,
+                    alphabet,
                 })
                 .collect();
 
