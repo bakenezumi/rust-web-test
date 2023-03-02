@@ -2,10 +2,12 @@ pub mod company_dao {
     use crate::company::Company;
     use crate::company::CreateCompany;
     use async_trait::async_trait;
+    use futures_core::stream::BoxStream;
 
     #[async_trait]
     pub trait CompanyDao: Send + Sync {
         async fn find(&self) -> anyhow::Result<Vec<Company>>;
+        async fn find_iter(&self) -> anyhow::Result<BoxStream<anyhow::Result<Company>>>;
         async fn create(&self, payload: CreateCompany) -> anyhow::Result<Company>;
     }
 }

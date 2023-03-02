@@ -3,6 +3,8 @@ pub mod company_dao_impl {
     use application::company::Company;
     use application::company::CreateCompany;
     use async_trait::async_trait;
+    use futures_core::stream::BoxStream;
+    use futures_util::StreamExt;
     use sqlx::mysql::MySqlPool;
 
     pub struct CompanyDaoImpl {
@@ -24,23 +26,39 @@ ORDER BY id
 
             let result = companies
                 .into_iter()
-                .map(|(id, name, alphabet)| Company {
-                    id,
-                    name,
-                    alphabet,
-                })
+                .map(|(id, name, alphabet)| Company { id, name, alphabet })
                 .collect();
 
             Ok(result)
         }
 
+        async fn find_iter(&self) -> anyhow::Result<BoxStream<anyhow::Result<Company>>> {
+            let companies = sqlx::query_as(
+                "
+SELECT id, name, alphabet
+FROM companies
+ORDER BY id
+",
+            )
+            .fetch(&self.pool);
+
+            let stream = companies
+                .map(|result| match result {
+                    Ok((id, name, alphabet)) => Ok(Company { id, name, alphabet }),
+                    Err(e) => Err(anyhow::anyhow!(e)),
+                })
+                .boxed();
+
+            Ok(stream)
+        }
+
         async fn create(&self, payload: CreateCompany) -> anyhow::Result<Company> {
             let id = sqlx::query("INSERT INTO companies (name, alphabet, created_at, updated_at) VALUES (?, ?, now(), now())")
-            .bind(&payload.name)
-            .bind(&payload.alphabet)
-            .execute(&self.pool)
-            .await?
-            .last_insert_id();
+                .bind(&payload.name)
+                .bind(&payload.alphabet)
+                .execute(&self.pool)
+                .await?
+                .last_insert_id();
 
             let created = Company {
                 id: id as i64,

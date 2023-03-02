@@ -49,6 +49,7 @@ fn router(state: AppState) -> Router {
         .route("/", get(root))
         .route("/companies", post(company::create_company))
         .route("/companies", get(company::find_companies))
+        .route("/companies-stream", get(company::find_companies_stream))
         .with_state(state)
 }
 
