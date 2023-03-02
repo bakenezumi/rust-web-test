@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-
 pub mod company_dao {
     use crate::company::Company;
     use crate::company::CreateCompany;
@@ -12,13 +10,11 @@ pub mod company_dao {
     }
 }
 
-#[derive(Deserialize)]
 pub struct CreateCompany {
     pub name: String,
     pub alphabet: String,
 }
 
-#[derive(Serialize)]
 pub struct Company {
     pub id: i64,
     pub name: String,
