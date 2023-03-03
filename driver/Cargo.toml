@@ -17,3 +17,4 @@ anyhow = "1.0"
 application = { path = "../application" }
 adapter = { path = "../adapter" }
 futures-util = "0.3.26"
+axum-streams = { version = "0.8", features=["json"] }

@@ -2,9 +2,11 @@ use crate::AppError;
 use application::company::Company;
 use application::company::CreateCompany;
 use application::AppState;
-use axum::debug_handler;
+// use axum::debug_handler;
+use axum::response::IntoResponse;
 use axum::{extract::State, http::StatusCode, Json};
-use futures_util::{StreamExt, TryStreamExt};
+use axum_streams::StreamBodyAs;
+use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
@@ -45,21 +47,21 @@ pub async fn find_companies(
 
 // curl localhost:3000/companies-stream
 // #[debug_handler]
-pub async fn find_companies_stream(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<CompanyWrapper>>, AppError> {
+pub async fn find_companies_stream(State(state): State<AppState>) -> impl IntoResponse {
     let dao = state.company_dao.read().await;
-    let result = dao
+    let stream = dao
         .find_iter()
-        .await?
-        .map(|r| r.map(|x| CompanyWrapper(x)))
-        .try_collect()
-        .await?;
-    Ok(Json(result))
+        .map(|r| {
+            let x = r.expect("error");
+            CompanyWrapper(x)
+        })
+        .boxed();
+    todo!()
+    // StreamBodyAs::json_array(stream)
 }
 
 // curl -X POST -H "Content-Type: application/json" -d '{"name":"test_name", "alphabet":"test_name"}' localhost:3000/companies
-#[debug_handler]
+// #[debug_handler]
 pub async fn create_company(
     state: State<AppState>,
     Json(payload): Json<CreateCompanyWrapper>,

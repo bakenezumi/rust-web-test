@@ -32,7 +32,7 @@ ORDER BY id
             Ok(result)
         }
 
-        async fn find_iter(&self) -> anyhow::Result<BoxStream<anyhow::Result<Company>>> {
+        fn find_iter(&self) -> BoxStream<anyhow::Result<Company>> {
             let companies = sqlx::query_as(
                 "
 SELECT id, name, alphabet
@@ -49,7 +49,7 @@ ORDER BY id
                 })
                 .boxed();
 
-            Ok(stream)
+            stream
         }
 
         async fn create(&self, payload: CreateCompany) -> anyhow::Result<Company> {

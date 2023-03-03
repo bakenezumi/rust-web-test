@@ -7,7 +7,7 @@ pub mod company_dao {
     #[async_trait]
     pub trait CompanyDao: Send + Sync {
         async fn find(&self) -> anyhow::Result<Vec<Company>>;
-        async fn find_iter(&self) -> anyhow::Result<BoxStream<anyhow::Result<Company>>>;
+        fn find_iter(&self) -> BoxStream<anyhow::Result<Company>>;
         async fn create(&self, payload: CreateCompany) -> anyhow::Result<Company>;
     }
 }
