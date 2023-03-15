@@ -6,5 +6,5 @@ use tokio::sync::RwLock;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub company_dao: Arc<RwLock<dyn CompanyDao>>,
+    pub company_dao: Arc<RwLock<&'static dyn CompanyDao>>,
 }

@@ -56,8 +56,7 @@ pub async fn find_companies_stream(State(state): State<AppState>) -> impl IntoRe
             CompanyWrapper(x)
         })
         .boxed();
-    todo!()
-    // StreamBodyAs::json_array(stream)
+    StreamBodyAs::json_array(stream)
 }
 
 // curl -X POST -H "Content-Type: application/json" -d '{"name":"test_name", "alphabet":"test_name"}' localhost:3000/companies

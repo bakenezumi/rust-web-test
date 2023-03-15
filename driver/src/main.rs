@@ -13,8 +13,23 @@ use tokio::sync::RwLock;
 
 use adapter::company_dao_impl::CompanyDaoImpl;
 use application::AppState;
+use once_cell::sync::Lazy;
 
 mod company;
+
+static MYSQL_POOL: Lazy<sqlx::mysql::MySqlPool> = Lazy::new(|| {
+    tokio::runtime::Runtime::new().unwrap().block_on(async {
+        MySqlPoolOptions::new()
+            .max_connections(5)
+            .connect("mysql://root@localhost/temporter_development")
+            .await
+            .unwrap()
+    })
+});
+
+static COMPANY_DAO: Lazy<CompanyDaoImpl> = Lazy::new(|| {
+    CompanyDaoImpl { pool: MYSQL_POOL.clone() }
+});
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -25,15 +40,8 @@ async fn main() -> Result<()> {
         .finish();
     tracing::subscriber::set_global_default(subscriber)?;
 
-    let pool = MySqlPoolOptions::new()
-        .max_connections(5)
-        .connect("mysql://root@localhost/temporter_development")
-        .await?;
-
-    let company_dao = CompanyDaoImpl { pool };
-
     let state = AppState {
-        company_dao: Arc::new(RwLock::new(company_dao)),
+        company_dao: Arc::new(RwLock::new(&*COMPANY_DAO)),
     };
     let app = router(state);
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
